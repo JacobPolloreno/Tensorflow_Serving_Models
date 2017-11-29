@@ -6,7 +6,6 @@ from cifar_helper import preprocess_and_save_data,\
         load_preprocess_training_batch
 from cifar_get_data import get_dataset
 from cifar_model import CNN
-from typing import Tuple
 
 
 CHECKPOINTS_DIR = 'checkpoints/'
@@ -24,9 +23,7 @@ def train(net,
           num_epochs: int=100,
           batch_size: int=5000,
           n_batches: int=5,
-          keep_prob: float=0.3,
-          classes: int=10,
-          image_dim: Tuple=(32, 32, 3)):
+          keep_prob: float=0.3):
 
     # Get validation data
     valid_features, valid_labels = pickle.load(
@@ -46,7 +43,6 @@ def train(net,
                         net.x: batch_features,
                         net.y: batch_labels,
                         net.keep_prob: keep_prob}
-                        # net.learning_rate: learning_rate}
 
                 # Single pass
                 sess.run(net.opt, feed)
