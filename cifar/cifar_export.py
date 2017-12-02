@@ -1,6 +1,6 @@
 import os
-import tensorflow as tf
 import shutil
+import tensorflow as tf
 
 from cifar_model import CNN
 
@@ -53,7 +53,23 @@ def main(_):
         learning_rate = 1.e-3
         net = CNN(images, learning_rate, keep_prob=1.)
 
-        # create saver to restore from checkpoints
+        # Create labels tensor and lookup
+        labels = ['airplane', 'automobile', 'bird', 'cat',
+                  'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+        labels_tensor = tf.constant(labels)
+        table = tf.contrib.lookup.index_to_string_table_from_tensor(
+            labels_tensor)
+
+        # Get prob values with indices
+        values, indices = tf.nn.top_k(net.logits, len(labels))
+        prediction_classes = table.lookup(tf.to_int64(indices))
+
+        # FIX issue with Cloud ML and Tensorflow 1.4
+        # Outer dimension needs to be [?, ...]
+        # https://github.com/tensorflow/models/issues/1811
+        # logits = tf.reshape(net.logits, [-1, len(labels)])
+
+        # Create saver to restore from checkpoints
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
@@ -75,13 +91,18 @@ def main(_):
             predict_tensor_inputs_info = tf.saved_model.utils.build_tensor_info(
                 jpegs)
             predict_tensor_scores_info = tf.saved_model.utils.build_tensor_info(
-                net.logits)
+                values)
+            predict_tensor_classes_info = tf.saved_model.utils.build_tensor_info(
+                prediction_classes)
 
             # Build prediction signature
             prediction_signature = (
                 tf.saved_model.signature_def_utils.build_signature_def(
                     inputs={'images': predict_tensor_inputs_info},
-                    outputs={'scores': predict_tensor_scores_info},
+                    outputs={
+                        'scores': predict_tensor_scores_info,
+                        'classes': predict_tensor_classes_info
+                    },
                     method_name=tf.saved_model.signature_constants.PREDICT_METHOD_NAME
                 )
             )

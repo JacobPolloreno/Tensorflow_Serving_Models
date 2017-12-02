@@ -17,7 +17,7 @@ tf.app.flags.DEFINE_string('text',
                            'homer_simpson:',
                            """Prime text to use to generate script""")
 tf.app.flags.DEFINE_integer('seq_length',
-                            50,
+                            100,
                             """Number of words to generate""")
 FLAGS = tf.app.flags.FLAGS
 
@@ -43,7 +43,7 @@ def main(_):
 
     # Call RNN model to make predictions on text
     request.model_spec.name = 'tvscript'
-    request.model_spec.signature_name = 'probs'
+    request.model_spec.signature_name = 'predict_labels'
 
     prime_text = FLAGS.text
 

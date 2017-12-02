@@ -41,18 +41,6 @@ def _write_assets(assets_directory, assets_filename):
     return path
 
 
-# Causing placeholder errors
-def preprocess_input(text_tensor):
-    text = tf.string_split([text_tensor], " ")
-    text = tf.sparse_tensor_to_dense(text, default_value='')
-    table = HashTable(
-        TextFileInitializer('data/vocab_hash.txt', tf.string,
-                            0, tf.int32, 1), -1)
-    tokens = table.lookup(text)
-
-    return tokens
-
-
 def main(_):
 
     with tf.Graph().as_default():
@@ -155,7 +143,7 @@ def main(_):
                 sess,
                 [tf.saved_model.tag_constants.SERVING],
                 signature_def_map={
-                    'probs': prediction_signature
+                    'predict_labels': prediction_signature
                 },
                 assets_collection=tf.get_collection(
                     tf.GraphKeys.ASSET_FILEPATHS),

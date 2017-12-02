@@ -185,9 +185,9 @@ class CNN(object):
                 logits=logits, labels=self.y),
             name='cost')
 
-        pred_class = tf.cast(tf.argmax(logits, 1), tf.int32, name="pred_class")
+        pred_class = tf.cast(tf.argmax(logits, 1), tf.int64, name="pred_class")
         correct_pred = tf.equal(pred_class,
-                                tf.argmax(self.y, 1, output_type=tf.int32))
+                                tf.argmax(self.y, 1))
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32),
                                   name='accuracy')
 
