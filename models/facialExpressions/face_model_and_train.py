@@ -71,6 +71,13 @@ def cnn_model_fn(features,
         activation=tf.nn.relu,
         **next(conv_defs_iterator)._asdict())
 
+    # batch_norm1 = tf.layers.batch_normalization(
+    #     conv1,
+    #     training=mode == tf.estimator.ModeKeys.TRAIN,
+    #     name="batch_norm1")
+
+    # conv1 = tf.nn.relu(batch_norm1)
+
     # Pooling Layer #1
     # 2x2 filter with stride of 2
     # Input Tensor Shape: [batch_size, 48, 48, 32]
@@ -87,6 +94,13 @@ def cnn_model_fn(features,
         inputs=pool1,
         activation=tf.nn.relu,
         **next(conv_defs_iterator)._asdict())
+
+    # batch_norm2 = tf.layers.batch_normalization(
+    #     conv2,
+    #     training=mode == tf.estimator.ModeKeys.TRAIN,
+    #     name="batch_norm2")
+
+    # conv2 = tf.nn.relu(batch_norm2)
 
     # Pooling Layer #2
     # Second pooling layer with 2x2 filter and stride 2
@@ -126,7 +140,7 @@ def cnn_model_fn(features,
     # Output Tensor Shape: [batch_size, 1024]
     dense = tf.layers.dense(
         inputs=flatten_layer,
-        units=1024,
+        units=2048,
         activation=tf.nn.relu,
         name="dense")
 
@@ -202,9 +216,14 @@ def main(unused_argv):
     train_data, eval_data, train_labels, eval_labels = train_test_split(
         features, labels, test_size=0.20, random_state=55)
 
+    # Data Preprocessing
+    training_mean = train_data.mean()
+    train_data -= training_mean
+    eval_data -= training_mean
+
     # Create the Estimator
     classifier = tf.estimator.Estimator(
-        model_fn=cnn_model_fn, model_dir='./convnet_model',
+        model_fn=cnn_model_fn, model_dir='./convnet_model/',
         params={'num_classes': len(_LABELS),
                 'conv_defs': _CONV_DEFS,
                 'learning_rate': 0.001,
@@ -212,21 +231,21 @@ def main(unused_argv):
 
     # Set up logging for prediction
     # Log the values in the "Softmax" tensor with label "probabilities"
-    tensors_to_log = {"probabilities": "softmax_tensor"}
-    logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log,
-        every_n_iter=2000)
+    # tensors_to_log = {"probabilities": "softmax_tensor"}
+    # logging_hook = tf.train.LoggingTensorHook(
+    #     tensors=tensors_to_log,
+    #     every_n_iter=2000)
 
     # Train the model
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
         x={"x": train_data},
         y=train_labels,
-        batch_size=100,
+        batch_size=32,
         num_epochs=None,
         shuffle=True)
     classifier.train(
         input_fn=train_input_fn,
-        steps=30000)
+        steps=20000)
         # hooks=[logging_hook])
 
     # Evaluate the model and print results
